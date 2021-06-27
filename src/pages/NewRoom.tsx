@@ -1,6 +1,6 @@
-import React from "react";
+import React, { FormEvent, useState } from "react";
 import useAuth from "../hooks/useAuth";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import illustration from "../assets/images/illustration.svg";
 import logo from "../assets/images/logo.svg";
 
@@ -8,9 +8,28 @@ import { Button } from "../components/Button";
 // import { Container } from './styles';
 
 import "../styles/auth.scss";
+import { database } from "../services/firebease";
 
 const NewRoom: React.FC = () => {
+  const history = useHistory();
   const { user } = useAuth();
+  const [newRoom, setNewRoom] = useState("");
+
+  async function handleCreateRoom(event: FormEvent) {
+    event.preventDefault();
+    if (newRoom.trim() === "") {
+      return;
+    }
+
+    const roomRef = database.ref("rooms");
+
+    const firebaseRoom = await roomRef.push({
+      title: newRoom,
+      authorId: user?.id,
+    });
+
+    history.push(`/rooms/${firebaseRoom.key}`);
+  }
   return (
     <div id="page-auth">
       <aside>
@@ -24,10 +43,19 @@ const NewRoom: React.FC = () => {
       <main>
         <div className="main-content">
           <img src={logo} alt="Logo" />
-          <h1>{user?.name}</h1>
+          {user && (
+            <div className="user-info">
+              <img src={user.avatar} alt="Avatar do usuário" />
+              <span>{user.name}</span>
+            </div>
+          )}
           <h2>Criar uma nova sala</h2>
-          <form action="">
-            <input type="text" placeholder="Nome da sala" />
+          <form onSubmit={handleCreateRoom}>
+            <input
+              type="text"
+              onChange={(e) => setNewRoom(e.target.value)}
+              placeholder="Nome da sala"
+            />
             <Button type="submit">Criar sala</Button>
           </form>
           <p>
